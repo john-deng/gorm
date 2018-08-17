@@ -13,11 +13,11 @@ import (
 	"time"
 
 	"github.com/erikstmartin/go-testdb"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mssql"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"github.com/jinzhu/gorm/dialects/postgres"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	"github.com/john-deng/gorm"
+	_ "github.com/john-deng/gorm/dialects/mssql"
+	_ "github.com/john-deng/gorm/dialects/mysql"
+	"github.com/john-deng/gorm/dialects/postgres"
+	_ "github.com/john-deng/gorm/dialects/sqlite"
 	"github.com/jinzhu/now"
 )
 
@@ -75,7 +75,7 @@ func OpenTestConnection() (db *gorm.DB, err error) {
 		db.LogMode(false)
 	}
 
-	db.DB().SetMaxIdleConns(10)
+	db.SqlDB().SetMaxIdleConns(10)
 
 	return
 }
@@ -840,7 +840,7 @@ func TestOpenExistingDB(t *testing.T) {
 	DB.Save(&User{Name: "jnfeinstein"})
 	dialect := os.Getenv("GORM_DIALECT")
 
-	db, err := gorm.Open(dialect, DB.DB())
+	db, err := gorm.Open(dialect, DB.SqlDB())
 	if err != nil {
 		t.Errorf("Should have wrapped the existing DB connection")
 	}
