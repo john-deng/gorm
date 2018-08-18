@@ -143,10 +143,10 @@ type gormDB struct {
 //       db, err := gorm.Open("mysql", "user:password@/dbname?charset=utf8&parseTime=True&loc=Local")
 //     }
 // GORM has wrapped some drivers, for easier to remember driver's import path, so you could import the mysql driver with
-//    import _ "github.com/john-deng/gorm/dialects/mysql"
-//    // import _ "github.com/john-deng/gorm/dialects/postgres"
-//    // import _ "github.com/john-deng/gorm/dialects/sqlite"
-//    // import _ "github.com/john-deng/gorm/dialects/mssql"
+//    import _ "gorm.io/gorm/dialects/mysql"
+//    // import _ "gorm.io/gorm/dialects/postgres"
+//    // import _ "gorm.io/gorm/dialects/sqlite"
+//    // import _ "gorm.io/gorm/dialects/mssql"
 func Open(dialect string, args ...interface{}) (db GormDB, err error) {
 	if len(args) == 0 {
 		err = errors.New("invalid database source")

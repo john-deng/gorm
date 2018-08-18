@@ -3,7 +3,7 @@ package gorm_test
 import (
 	"testing"
 
-	"github.com/john-deng/gorm"
+	"gorm.io/gorm"
 )
 
 type CalculateField struct {

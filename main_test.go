@@ -13,11 +13,11 @@ import (
 	"time"
 
 	"github.com/erikstmartin/go-testdb"
-	"github.com/john-deng/gorm"
-	_ "github.com/john-deng/gorm/dialects/mssql"
-	_ "github.com/john-deng/gorm/dialects/mysql"
-	"github.com/john-deng/gorm/dialects/postgres"
-	_ "github.com/john-deng/gorm/dialects/sqlite"
+	"gorm.io/gorm"
+	_ "gorm.io/gorm/dialects/mssql"
+	_ "gorm.io/gorm/dialects/mysql"
+	"gorm.io/gorm/dialects/postgres"
+	_ "gorm.io/gorm/dialects/sqlite"
 	"github.com/jinzhu/now"
 )
 

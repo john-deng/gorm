@@ -1,4 +1,4 @@
-Your issue may already be reported! Please search on the [issue track](https://github.com/john-deng/gorm/issues) before creating one.
+Your issue may already be reported! Please search on the [issue track](https://gorm.io/gorm/issues) before creating one.
 
 ### What version of Go are you using (`go version`)?
 
@@ -8,17 +8,17 @@ Your issue may already be reported! Please search on the [issue track](https://g
 
 ### Please provide a complete runnable program to reproduce your issue. **IMPORTANT**
 
-Need to runnable with [GORM's docker compose config](https://github.com/john-deng/gorm/blob/master/docker-compose.yml) or please provides your config.
+Need to runnable with [GORM's docker compose config](https://gorm.io/gorm/blob/master/docker-compose.yml) or please provides your config.
 
 ```go
 package main
 
 import (
-	"github.com/john-deng/gorm"
-	_ "github.com/john-deng/gorm/dialects/mssql"
-	_ "github.com/john-deng/gorm/dialects/mysql"
-	_ "github.com/john-deng/gorm/dialects/postgres"
-	_ "github.com/john-deng/gorm/dialects/sqlite"
+	"gorm.io/gorm"
+	_ "gorm.io/gorm/dialects/mssql"
+	_ "gorm.io/gorm/dialects/mysql"
+	_ "gorm.io/gorm/dialects/postgres"
+	_ "gorm.io/gorm/dialects/sqlite"
 )
 
 var db *gorm.DB
