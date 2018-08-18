@@ -19,7 +19,13 @@ import (
 	"time"
 	"fmt"
 	"errors"
+	"github.com/jinzhu/copier"
 )
+
+type Mocker interface {
+	Mock(method string, data interface{}) *FakeRepository
+	Expect(err error)
+}
 
 // DB contains information for current db connection
 type FakeRepository struct {
@@ -40,6 +46,7 @@ type FakeRepository struct {
 	callbacks     *Callback
 	dialect       Dialect
 	singularTable bool
+	mockData      map[string]interface{}
 }
 
 // New clone a new db connection without search conditions
@@ -206,7 +213,6 @@ func (r *FakeRepository) Scopes(funcs ...func(Repository) Repository) Repository
 	return r
 }
 
-
 // Unscoped return all record including deleted record, refer Soft Delete https://jinzhu.github.io/gorm/crud.html#soft-delete
 func (r *FakeRepository) Unscoped() Repository {
 	return r
@@ -224,27 +230,31 @@ func (r *FakeRepository) Assign(attrs ...interface{}) Repository {
 
 // First find first record that match given conditions, order by primary key
 func (r *FakeRepository) First(out interface{}, where ...interface{}) Repository {
+	r.copyData("First", out)
 	return r
 }
 
-
 // Take return a record that match given conditions, the order will depend on the database implementation
 func (r *FakeRepository) Take(out interface{}, where ...interface{}) Repository {
+	r.copyData("Take", out)
 	return r
 }
 
 // Last find last record that match given conditions, order by primary key
 func (r *FakeRepository) Last(out interface{}, where ...interface{}) Repository {
+	r.copyData("Last", out)
 	return r
 }
 
 // Find find records that match given conditions
 func (r *FakeRepository) Find(out interface{}, where ...interface{}) Repository {
+	r.copyData("Find", out)
 	return r
 }
 
 // Scan scan value to a struct
 func (r *FakeRepository) Scan(dest interface{}) Repository {
+	r.copyData("Scan", dest)
 	return r
 }
 
@@ -262,7 +272,6 @@ func (r *FakeRepository) Rows() (*sql.Rows, error) {
 func (r *FakeRepository) ScanRows(rows *sql.Rows, result interface{}) error {
 	return nil
 }
-
 
 // Pluck used to query single column from a model as a map
 //     var ages []int64
@@ -284,12 +293,14 @@ func (r *FakeRepository) Related(value interface{}, foreignKeys ...string) Repos
 // FirstOrInit find first matched record or initialize a new one with given conditions (only works with struct, map conditions)
 // https://jinzhu.github.io/gorm/crud.html#firstorinit
 func (r *FakeRepository) FirstOrInit(out interface{}, where ...interface{}) Repository {
+	r.copyData("FirstOrInit", out)
 	return r
 }
 
 // FirstOrCreate find first matched record or create a new one with given conditions (only works with struct, map conditions)
 // https://jinzhu.github.io/gorm/crud.html#firstorcreate
 func (r *FakeRepository) FirstOrCreate(out interface{}, where ...interface{}) Repository {
+	r.copyData("FirstOrCreate", out)
 	return r
 }
 
@@ -353,7 +364,6 @@ func (r *FakeRepository) Table(name string) Repository {
 	return r
 }
 
-
 // Debug start debug mode
 func (r *FakeRepository) Debug() Repository {
 	return r
@@ -409,36 +419,30 @@ func (r *FakeRepository) AutoMigrate(values ...interface{}) Repository {
 	return r
 }
 
-
 // ModifyColumn modify column to type
 func (r *FakeRepository) ModifyColumn(column string, typ string) Repository {
 	return r
 }
-
 
 // DropColumn drop a column
 func (r *FakeRepository) DropColumn(column string) Repository {
 	return r
 }
 
-
 // AddIndex add index for columns with given name
 func (r *FakeRepository) AddIndex(indexName string, columns ...string) Repository {
 	return r
 }
-
 
 // AddUniqueIndex add unique index for columns with given name
 func (r *FakeRepository) AddUniqueIndex(indexName string, columns ...string) Repository {
 	return r
 }
 
-
 // RemoveIndex remove index with name
 func (r *FakeRepository) RemoveIndex(indexName string) Repository {
 	return r
 }
-
 
 // AddForeignKey Add foreign key to the given scope, e.g:
 //     db.Model(&User{}).AddForeignKey("city_id", "cities(id)", "RESTRICT", "RESTRICT")
@@ -446,13 +450,11 @@ func (r *FakeRepository) AddForeignKey(field string, dest string, onDelete strin
 	return r
 }
 
-
 // RemoveForeignKey Remove foreign key from the given scope, e.g:
 //     db.Model(&User{}).RemoveForeignKey("city_id", "cities(id)")
 func (r *FakeRepository) RemoveForeignKey(field string, dest string) Repository {
 	return r
 }
-
 
 // Association start `Association Mode` to handler relations things easir in that mode, refer: https://jinzhu.github.io/gorm/associations.html#association-mode
 func (r *FakeRepository) Association(column string) *Association {
@@ -484,7 +486,6 @@ func (r *FakeRepository) Get(name string) (value interface{}, ok bool) {
 // SetJoinTableHandler set a model's join table handler for a relation
 func (r *FakeRepository) SetJoinTableHandler(source interface{}, column string, handler JoinTableHandlerInterface) {
 }
-
 
 // AddError add error to the db
 func (r *FakeRepository) AddError(err error) error {
@@ -526,7 +527,6 @@ func (r *FakeRepository) SetValue(v interface{}) Repository {
 	r.value = v
 	return r
 }
-
 
 func (r *FakeRepository) Error() error {
 	return r.err
@@ -604,7 +604,6 @@ func (r *FakeRepository) SetDialect(d Dialect) Repository {
 	return r
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // Private Methods For DB
 ////////////////////////////////////////////////////////////////////////////////
@@ -649,5 +648,25 @@ func (r *FakeRepository) Log(v ...interface{}) {
 func (r *FakeRepository) Slog(sql string, t time.Time, vars ...interface{}) {
 	if r.logMode == 2 {
 		r.Print("sql", fileWithLineNum(), NowFunc().Sub(t), sql, vars, r.RowsAffected())
+	}
+}
+
+func (r *FakeRepository) Mock(method string, data interface{}) *FakeRepository {
+	if r.mockData == nil {
+		r.mockData = make(map[string]interface{})
+	}
+	r.mockData[method] = data
+
+	return r
+}
+
+func (r *FakeRepository) Expect(err error) {
+	r.SetError(err)
+}
+
+func (r *FakeRepository) copyData(name string, out interface{})  {
+	md := r.mockData[name]
+	if md != nil {
+		copier.Copy(out, md)
 	}
 }
