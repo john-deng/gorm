@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	defaultLogger            = Logger{log.New(os.Stdout, "\r\n", 0)}
+	defaultLogger            = logger{log.New(os.Stdout, "\r\n", 0)}
 	sqlRegexp                = regexp.MustCompile(`\?`)
 	numericPlaceHolderRegexp = regexp.MustCompile(`\$\d+`)
 )
@@ -99,7 +99,7 @@ var LogFormatter = func(values ...interface{}) (messages []interface{}) {
 	return
 }
 
-type logger interface {
+type Logger interface {
 	Print(v ...interface{})
 }
 
@@ -109,11 +109,11 @@ type LogWriter interface {
 }
 
 // Logger default logger
-type Logger struct {
+type logger struct {
 	LogWriter
 }
 
 // Print format & print log
-func (logger Logger) Print(values ...interface{}) {
+func (logger logger) Print(values ...interface{}) {
 	logger.Println(LogFormatter(values...)...)
 }

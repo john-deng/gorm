@@ -4,8 +4,8 @@ import (
 	"fmt"
 )
 
-type search struct {
-	db               *DB
+type Search struct {
+	db               GormDB
 	whereConditions  []map[string]interface{}
 	orConditions     []map[string]interface{}
 	notConditions    []map[string]interface{}
@@ -31,37 +31,37 @@ type searchPreload struct {
 	conditions []interface{}
 }
 
-func (s *search) clone() *search {
+func (s *Search) clone() *Search {
 	clone := *s
 	return &clone
 }
 
-func (s *search) Where(query interface{}, values ...interface{}) *search {
+func (s *Search) Where(query interface{}, values ...interface{}) *Search {
 	s.whereConditions = append(s.whereConditions, map[string]interface{}{"query": query, "args": values})
 	return s
 }
 
-func (s *search) Not(query interface{}, values ...interface{}) *search {
+func (s *Search) Not(query interface{}, values ...interface{}) *Search {
 	s.notConditions = append(s.notConditions, map[string]interface{}{"query": query, "args": values})
 	return s
 }
 
-func (s *search) Or(query interface{}, values ...interface{}) *search {
+func (s *Search) Or(query interface{}, values ...interface{}) *Search {
 	s.orConditions = append(s.orConditions, map[string]interface{}{"query": query, "args": values})
 	return s
 }
 
-func (s *search) Attrs(attrs ...interface{}) *search {
+func (s *Search) Attrs(attrs ...interface{}) *Search {
 	s.initAttrs = append(s.initAttrs, toSearchableMap(attrs...))
 	return s
 }
 
-func (s *search) Assign(attrs ...interface{}) *search {
+func (s *Search) Assign(attrs ...interface{}) *Search {
 	s.assignAttrs = append(s.assignAttrs, toSearchableMap(attrs...))
 	return s
 }
 
-func (s *search) Order(value interface{}, reorder ...bool) *search {
+func (s *Search) Order(value interface{}, reorder ...bool) *Search {
 	if len(reorder) > 0 && reorder[0] {
 		s.orders = []interface{}{}
 	}
@@ -72,33 +72,33 @@ func (s *search) Order(value interface{}, reorder ...bool) *search {
 	return s
 }
 
-func (s *search) Select(query interface{}, args ...interface{}) *search {
+func (s *Search) Select(query interface{}, args ...interface{}) *Search {
 	s.selects = map[string]interface{}{"query": query, "args": args}
 	return s
 }
 
-func (s *search) Omit(columns ...string) *search {
+func (s *Search) Omit(columns ...string) *Search {
 	s.omits = columns
 	return s
 }
 
-func (s *search) Limit(limit interface{}) *search {
+func (s *Search) Limit(limit interface{}) *Search {
 	s.limit = limit
 	return s
 }
 
-func (s *search) Offset(offset interface{}) *search {
+func (s *Search) Offset(offset interface{}) *Search {
 	s.offset = offset
 	return s
 }
 
-func (s *search) Group(query string) *search {
+func (s *Search) Group(query string) *Search {
 	s.group = s.getInterfaceAsSQL(query)
 	return s
 }
 
-func (s *search) Having(query interface{}, values ...interface{}) *search {
-	if val, ok := query.(*expr); ok {
+func (s *Search) Having(query interface{}, values ...interface{}) *Search {
+	if val, ok := query.(*Expression); ok {
 		s.havingConditions = append(s.havingConditions, map[string]interface{}{"query": val.expr, "args": val.args})
 	} else {
 		s.havingConditions = append(s.havingConditions, map[string]interface{}{"query": query, "args": values})
@@ -106,12 +106,12 @@ func (s *search) Having(query interface{}, values ...interface{}) *search {
 	return s
 }
 
-func (s *search) Joins(query string, values ...interface{}) *search {
+func (s *Search) Joins(query string, values ...interface{}) *Search {
 	s.joinConditions = append(s.joinConditions, map[string]interface{}{"query": query, "args": values})
 	return s
 }
 
-func (s *search) Preload(schema string, values ...interface{}) *search {
+func (s *Search) Preload(schema string, values ...interface{}) *Search {
 	var preloads []searchPreload
 	for _, preload := range s.preload {
 		if preload.schema != schema {
@@ -123,22 +123,22 @@ func (s *search) Preload(schema string, values ...interface{}) *search {
 	return s
 }
 
-func (s *search) Raw(b bool) *search {
+func (s *Search) Raw(b bool) *Search {
 	s.raw = b
 	return s
 }
 
-func (s *search) unscoped() *search {
+func (s *Search) unscoped() *Search {
 	s.Unscoped = true
 	return s
 }
 
-func (s *search) Table(name string) *search {
+func (s *Search) Table(name string) *Search {
 	s.tableName = name
 	return s
 }
 
-func (s *search) getInterfaceAsSQL(value interface{}) (str string) {
+func (s *Search) getInterfaceAsSQL(value interface{}) (str string) {
 	switch value.(type) {
 	case string, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
 		str = fmt.Sprintf("%v", value)

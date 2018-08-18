@@ -107,14 +107,14 @@ func autoPreload(scope *Scope) {
 	}
 }
 
-func (scope *Scope) generatePreloadDBWithConditions(conditions []interface{}) (*DB, []interface{}) {
+func (scope *Scope) generatePreloadDBWithConditions(conditions []interface{}) (GormDB, []interface{}) {
 	var (
 		preloadDB         = scope.NewDB()
 		preloadConditions []interface{}
 	)
 
 	for _, condition := range conditions {
-		if scopes, ok := condition.(func(*DB) *DB); ok {
+		if scopes, ok := condition.(func(GormDB) GormDB); ok {
 			preloadDB = scopes(preloadDB)
 		} else {
 			preloadConditions = append(preloadConditions, condition)
@@ -146,7 +146,7 @@ func (scope *Scope) handleHasOnePreload(field *Field, conditions []interface{}) 
 	}
 
 	results := makeSlice(field.Struct.Type)
-	scope.Err(preloadDB.Where(query, values...).Find(results, preloadConditions...).Error)
+	scope.Err(preloadDB.Where(query, values...).Find(results, preloadConditions...).Error())
 
 	// assign find results
 	var (
@@ -195,7 +195,7 @@ func (scope *Scope) handleHasManyPreload(field *Field, conditions []interface{})
 	}
 
 	results := makeSlice(field.Struct.Type)
-	scope.Err(preloadDB.Where(query, values...).Find(results, preloadConditions...).Error)
+	scope.Err(preloadDB.Where(query, values...).Find(results, preloadConditions...).Error())
 
 	// assign find results
 	var (
@@ -241,7 +241,7 @@ func (scope *Scope) handleBelongsToPreload(field *Field, conditions []interface{
 
 	// find relations
 	results := makeSlice(field.Struct.Type)
-	scope.Err(preloadDB.Where(fmt.Sprintf("%v IN (%v)", toQueryCondition(scope, relation.AssociationForeignDBNames), toQueryMarks(primaryKeys)), toQueryValues(primaryKeys)...).Find(results, preloadConditions...).Error)
+	scope.Err(preloadDB.Where(fmt.Sprintf("%v IN (%v)", toQueryCondition(scope, relation.AssociationForeignDBNames), toQueryMarks(primaryKeys)), toQueryValues(primaryKeys)...).Find(results, preloadConditions...).Error())
 
 	// assign find results
 	var (
@@ -294,7 +294,7 @@ func (scope *Scope) handleManyToManyPreload(field *Field, conditions []interface
 	newScope := scope.New(reflect.New(fieldType).Interface())
 	preloadDB = preloadDB.Table(newScope.TableName()).Model(newScope.Value)
 
-	if len(preloadDB.search.selects) == 0 {
+	if len(preloadDB.Search().selects) == 0 {
 		preloadDB = preloadDB.Select("*")
 	}
 
@@ -329,7 +329,7 @@ func (scope *Scope) handleManyToManyPreload(field *Field, conditions []interface
 
 		scope.New(elem.Addr().Interface()).
 			InstanceSet("gorm:skip_query_callback", true).
-			callCallbacks(scope.db.parent.callbacks.queries)
+			callCallbacks(scope.db.Parent().Callback().queries)
 
 		var foreignKeys = make([]interface{}, len(sourceKeys))
 		// generate hashed forkey keys in join table

@@ -18,7 +18,7 @@ func TestCreate(t *testing.T) {
 		t.Error("User should be new record before create")
 	}
 
-	if count := DB.Save(&user).RowsAffected; count != 1 {
+	if count := DB.Save(&user).RowsAffected(); count != 1 {
 		t.Error("There should be one record be affected when create record")
 	}
 
@@ -27,7 +27,7 @@ func TestCreate(t *testing.T) {
 	}
 
 	var newUser User
-	if err := DB.First(&newUser, user.Id).Error; err != nil {
+	if err := DB.First(&newUser, user.Id).Error(); err != nil {
 		t.Errorf("No error should happen, but got %v", err)
 	}
 
@@ -68,7 +68,7 @@ func TestCreateEmptyStrut(t *testing.T) {
 	}
 	DB.AutoMigrate(&EmptyStruct{})
 
-	if err := DB.Create(&EmptyStruct{}).Error; err != nil {
+	if err := DB.Create(&EmptyStruct{}).Error(); err != nil {
 		t.Errorf("No error should happen when creating user, but got %v", err)
 	}
 }
@@ -130,7 +130,7 @@ func TestCreateWithNoGORMPrimayKey(t *testing.T) {
 	}
 
 	jt := JoinTable{From: 1, To: 2}
-	err := DB.Create(&jt).Error
+	err := DB.Create(&jt).Error()
 	if err != nil {
 		t.Errorf("No error should happen when create a record without a GORM primary key. But in the database this primary key exists and is the union of 2 or more fields\n But got: %s", err)
 	}
@@ -138,7 +138,7 @@ func TestCreateWithNoGORMPrimayKey(t *testing.T) {
 
 func TestCreateWithNoStdPrimaryKeyAndDefaultValues(t *testing.T) {
 	animal := Animal{Name: "Ferdinand"}
-	if DB.Save(&animal).Error != nil {
+	if DB.Save(&animal).Error() != nil {
 		t.Errorf("No error should happen when create a record without std primary key")
 	}
 
@@ -153,7 +153,7 @@ func TestCreateWithNoStdPrimaryKeyAndDefaultValues(t *testing.T) {
 	// Test create with default value not overrided
 	an := Animal{From: "nerdz"}
 
-	if DB.Save(&an).Error != nil {
+	if DB.Save(&an).Error() != nil {
 		t.Errorf("No error should happen when create an record without std primary key")
 	}
 

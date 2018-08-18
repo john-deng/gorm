@@ -49,17 +49,17 @@ func TestUpdate(t *testing.T) {
 		t.Errorf("Product should not be changed to 789")
 	}
 
-	if DB.Model(product2).Update("CreatedAt", time.Now().Add(time.Hour)).Error != nil {
+	if DB.Model(product2).Update("CreatedAt", time.Now().Add(time.Hour)).Error() != nil {
 		t.Error("No error should raise when update with CamelCase")
 	}
 
-	if DB.Model(&product2).UpdateColumn("CreatedAt", time.Now().Add(time.Hour)).Error != nil {
+	if DB.Model(&product2).UpdateColumn("CreatedAt", time.Now().Add(time.Hour)).Error() != nil {
 		t.Error("No error should raise when update_column with CamelCase")
 	}
 
 	var products []Product
 	DB.Find(&products)
-	if count := DB.Model(Product{}).Update("CreatedAt", time.Now().Add(2*time.Hour)).RowsAffected; count != int64(len(products)) {
+	if count := DB.Model(Product{}).Update("CreatedAt", time.Now().Add(2*time.Hour)).RowsAffected(); count != int64(len(products)) {
 		t.Error("RowsAffected should be correct when do batch update")
 	}
 
@@ -89,7 +89,7 @@ func TestUpdateWithNoStdPrimaryKeyAndDefaultValues(t *testing.T) {
 
 	var animals []Animal
 	DB.Find(&animals)
-	if count := DB.Model(Animal{}).Update("CreatedAt", time.Now().Add(2*time.Hour)).RowsAffected; count != int64(len(animals)) {
+	if count := DB.Model(Animal{}).Update("CreatedAt", time.Now().Add(2*time.Hour)).RowsAffected(); count != int64(len(animals)) {
 		t.Error("RowsAffected should be correct when do batch update")
 	}
 
@@ -387,8 +387,8 @@ func TestUpdateColumnsSkipsAssociations(t *testing.T) {
 	newAge := int64(100)
 	user.BillingAddress.Address1 = "second street"
 	db := DB.Model(user).UpdateColumns(User{Age: newAge})
-	if db.RowsAffected != 1 {
-		t.Errorf("Expected RowsAffected=1 but instead RowsAffected=%v", DB.RowsAffected)
+	if db.RowsAffected() != 1 {
+		t.Errorf("Expected RowsAffected=1 but instead RowsAffected=%v", DB.RowsAffected())
 	}
 
 	// Verify that Age now=`newAge`.
@@ -439,7 +439,7 @@ func TestUpdatesTableWithIgnoredValues(t *testing.T) {
 		Updates(&ElementWithIgnoredField{Value: "bar", IgnoredField: 100})
 
 	var elem1 ElementWithIgnoredField
-	err := DB.First(&elem1, elem.Id).Error
+	err := DB.First(&elem1, elem.Id).Error()
 	if err != nil {
 		t.Errorf("error getting an element from database: %s", err.Error())
 	}

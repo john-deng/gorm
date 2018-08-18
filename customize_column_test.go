@@ -39,7 +39,7 @@ func TestCustomizeColumn(t *testing.T) {
 	now := time.Now()
 	cc := CustomizeColumn{ID: 666, Name: expected, Date: &now}
 
-	if count := DB.Create(&cc).RowsAffected; count != 1 {
+	if count := DB.Create(&cc).RowsAffected(); count != 1 {
 		t.Error("There should be one record be affected when create record")
 	}
 
@@ -62,7 +62,7 @@ func TestCustomizeColumn(t *testing.T) {
 
 func TestCustomColumnAndIgnoredFieldClash(t *testing.T) {
 	DB.DropTable(&CustomColumnAndIgnoredFieldClash{})
-	if err := DB.AutoMigrate(&CustomColumnAndIgnoredFieldClash{}).Error; err != nil {
+	if err := DB.AutoMigrate(&CustomColumnAndIgnoredFieldClash{}).Error(); err != nil {
 		t.Errorf("Should not raise error: %s", err)
 	}
 }
@@ -87,17 +87,17 @@ func TestManyToManyWithCustomizedColumn(t *testing.T) {
 		Accounts: []CustomizeAccount{account},
 	}
 
-	if err := DB.Create(&account).Error; err != nil {
+	if err := DB.Create(&account).Error(); err != nil {
 		t.Errorf("no error should happen, but got %v", err)
 	}
 
-	if err := DB.Create(&person).Error; err != nil {
+	if err := DB.Create(&person).Error(); err != nil {
 		t.Errorf("no error should happen, but got %v", err)
 	}
 
 	var person1 CustomizePerson
 	scope := DB.NewScope(nil)
-	if err := DB.Preload("Accounts").First(&person1, scope.Quote("idPerson")+" = ?", person.IdPerson).Error; err != nil {
+	if err := DB.Preload("Accounts").First(&person1, scope.Quote("idPerson")+" = ?", person.IdPerson).Error(); err != nil {
 		t.Errorf("no error should happen when preloading customized column many2many relations, but got %v", err)
 	}
 
@@ -132,7 +132,7 @@ func TestOneToOneWithCustomizedColumn(t *testing.T) {
 	DB.Create(&invitation)
 
 	var invitation2 CustomizeInvitation
-	if err := DB.Preload("Person").Find(&invitation2, invitation.ID).Error; err != nil {
+	if err := DB.Preload("Person").Find(&invitation2, invitation.ID).Error(); err != nil {
 		t.Errorf("no error should happen, but got %v", err)
 	}
 
@@ -184,12 +184,12 @@ func TestOneToManyWithCustomizedColumn(t *testing.T) {
 		},
 	}
 
-	if err := DB.Create(&discount).Error; err != nil {
+	if err := DB.Create(&discount).Error(); err != nil {
 		t.Errorf("no error should happen but got %v", err)
 	}
 
 	var discount1 PromotionDiscount
-	if err := DB.Preload("Coupons").First(&discount1, "id = ?", discount.ID).Error; err != nil {
+	if err := DB.Preload("Coupons").First(&discount1, "id = ?", discount.ID).Error(); err != nil {
 		t.Errorf("no error should happen but got %v", err)
 	}
 
@@ -198,7 +198,7 @@ func TestOneToManyWithCustomizedColumn(t *testing.T) {
 	}
 
 	var coupon PromotionCoupon
-	if err := DB.Preload("Discount").First(&coupon, "code = ?", "newyear1").Error; err != nil {
+	if err := DB.Preload("Discount").First(&coupon, "code = ?", "newyear1").Error(); err != nil {
 		t.Errorf("no error should happen but got %v", err)
 	}
 
@@ -222,12 +222,12 @@ func TestHasOneWithPartialCustomizedColumn(t *testing.T) {
 		},
 	}
 
-	if err := DB.Create(&discount).Error; err != nil {
+	if err := DB.Create(&discount).Error(); err != nil {
 		t.Errorf("no error should happen but got %v", err)
 	}
 
 	var discount1 PromotionDiscount
-	if err := DB.Preload("Rule").First(&discount1, "id = ?", discount.ID).Error; err != nil {
+	if err := DB.Preload("Rule").First(&discount1, "id = ?", discount.ID).Error(); err != nil {
 		t.Errorf("no error should happen but got %v", err)
 	}
 
@@ -236,7 +236,7 @@ func TestHasOneWithPartialCustomizedColumn(t *testing.T) {
 	}
 
 	var rule PromotionRule
-	if err := DB.Preload("Discount").First(&rule, "name = ?", "time_limited").Error; err != nil {
+	if err := DB.Preload("Discount").First(&rule, "name = ?", "time_limited").Error(); err != nil {
 		t.Errorf("no error should happen but got %v", err)
 	}
 
@@ -257,12 +257,12 @@ func TestBelongsToWithPartialCustomizedColumn(t *testing.T) {
 		},
 	}
 
-	if err := DB.Create(&discount).Error; err != nil {
+	if err := DB.Create(&discount).Error(); err != nil {
 		t.Errorf("no error should happen but got %v", err)
 	}
 
 	var discount1 PromotionDiscount
-	if err := DB.Preload("Benefits").First(&discount1, "id = ?", discount.ID).Error; err != nil {
+	if err := DB.Preload("Benefits").First(&discount1, "id = ?", discount.ID).Error(); err != nil {
 		t.Errorf("no error should happen but got %v", err)
 	}
 
@@ -271,7 +271,7 @@ func TestBelongsToWithPartialCustomizedColumn(t *testing.T) {
 	}
 
 	var benefit PromotionBenefit
-	if err := DB.Preload("Discount").First(&benefit, "name = ?", "free cod").Error; err != nil {
+	if err := DB.Preload("Discount").First(&benefit, "name = ?", "free cod").Error(); err != nil {
 		t.Errorf("no error should happen but got %v", err)
 	}
 
@@ -291,12 +291,12 @@ func TestSelfReferencingMany2ManyColumn(t *testing.T) {
 	DB.AutoMigrate(&SelfReferencingUser{})
 
 	friend1 := SelfReferencingUser{Name: "friend1_m2m"}
-	if err := DB.Create(&friend1).Error; err != nil {
+	if err := DB.Create(&friend1).Error(); err != nil {
 		t.Errorf("no error should happen, but got %v", err)
 	}
 
 	friend2 := SelfReferencingUser{Name: "friend2_m2m"}
-	if err := DB.Create(&friend2).Error; err != nil {
+	if err := DB.Create(&friend2).Error(); err != nil {
 		t.Errorf("no error should happen, but got %v", err)
 	}
 
@@ -305,7 +305,7 @@ func TestSelfReferencingMany2ManyColumn(t *testing.T) {
 		Friends: []*SelfReferencingUser{&friend1, &friend2},
 	}
 
-	if err := DB.Create(&user).Error; err != nil {
+	if err := DB.Create(&user).Error(); err != nil {
 		t.Errorf("no error should happen, but got %v", err)
 	}
 
@@ -315,7 +315,7 @@ func TestSelfReferencingMany2ManyColumn(t *testing.T) {
 
 	var newUser = SelfReferencingUser{}
 
-	if err := DB.Preload("Friends").First(&newUser, "id = ?", user.ID).Error; err != nil {
+	if err := DB.Preload("Friends").First(&newUser, "id = ?", user.ID).Error(); err != nil {
 		t.Errorf("no error should happen, but got %v", err)
 	}
 

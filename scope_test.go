@@ -9,16 +9,16 @@ import (
 	"github.com/john-deng/gorm"
 )
 
-func NameIn1And2(d *gorm.DB) *gorm.DB {
+func NameIn1And2(d gorm.GormDB) gorm.GormDB {
 	return d.Where("name in (?)", []string{"ScopeUser1", "ScopeUser2"})
 }
 
-func NameIn2And3(d *gorm.DB) *gorm.DB {
+func NameIn2And3(d gorm.GormDB) gorm.GormDB {
 	return d.Where("name in (?)", []string{"ScopeUser2", "ScopeUser3"})
 }
 
-func NameIn(names []string) func(d *gorm.DB) *gorm.DB {
-	return func(d *gorm.DB) *gorm.DB {
+func NameIn(names []string) func(d gorm.GormDB) gorm.GormDB {
+	return func(d gorm.GormDB) gorm.GormDB {
 		return d.Where("name in (?)", names)
 	}
 }
@@ -57,12 +57,12 @@ func TestValuer(t *testing.T) {
 	name := randName()
 
 	origUser := User{Name: name, Age: 1, Password: EncryptedData("pass1"), PasswordHash: []byte("abc")}
-	if err := DB.Save(&origUser).Error; err != nil {
+	if err := DB.Save(&origUser).Error(); err != nil {
 		t.Errorf("No error should happen when saving user, but got %v", err)
 	}
 
 	var user2 User
-	if err := DB.Where("name = ? AND password = ? AND password_hash = ?", name, EncryptedData("pass1"), []byte("abc")).First(&user2).Error; err != nil {
+	if err := DB.Where("name = ? AND password = ? AND password_hash = ?", name, EncryptedData("pass1"), []byte("abc")).First(&user2).Error(); err != nil {
 		t.Errorf("No error should happen when querying user with valuer, but got %v", err)
 	}
 }
@@ -70,7 +70,7 @@ func TestValuer(t *testing.T) {
 func TestFailedValuer(t *testing.T) {
 	name := randName()
 
-	err := DB.Exec("INSERT INTO users(name, password) VALUES(?, ?)", name, EncryptedData("xpass1")).Error
+	err := DB.Exec("INSERT INTO users(name, password) VALUES(?, ?)", name, EncryptedData("xpass1")).Error()
 
 	if err == nil {
 		t.Errorf("There should be an error should happen when insert data")

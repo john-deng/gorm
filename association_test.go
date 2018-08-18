@@ -18,7 +18,7 @@ func TestBelongsTo(t *testing.T) {
 		MainCategory: Category{Name: "Main Category 1"},
 	}
 
-	if err := DB.Save(&post).Error; err != nil {
+	if err := DB.Save(&post).Error(); err != nil {
 		t.Error("Got errors when save post", err)
 	}
 
@@ -167,7 +167,7 @@ func TestBelongsTo(t *testing.T) {
 		t.Errorf("Post's category count should be 0 after the category has been deleted, but got %v", count)
 	}
 
-	if err := DB.Model(&post).Association("Category").Find(&Category{}).Error; err == nil {
+	if err := DB.Model(&post).Association("Category").Find(&Category{}).Error(); err == nil {
 		t.Errorf("Post's category is not findable after Delete")
 	}
 
@@ -175,7 +175,7 @@ func TestBelongsTo(t *testing.T) {
 		t.Errorf("Post's category count should be 1 when query with Unscoped, but got %v", count)
 	}
 
-	if err := DB.Unscoped().Model(&post).Association("Category").Find(&Category{}).Error; err != nil {
+	if err := DB.Unscoped().Model(&post).Association("Category").Find(&Category{}).Error(); err != nil {
 		t.Errorf("Post's category should be findable when query with Unscoped, got %v", err)
 	}
 }
@@ -229,7 +229,7 @@ func TestHasOne(t *testing.T) {
 		CreditCard: CreditCard{Number: "411111111111"},
 	}
 
-	if err := DB.Save(&user).Error; err != nil {
+	if err := DB.Save(&user).Error(); err != nil {
 		t.Error("Got errors when save user", err.Error())
 	}
 
@@ -356,7 +356,7 @@ func TestHasOne(t *testing.T) {
 		t.Errorf("User's credit card count should be 0 after credit card deleted, but got %v", count)
 	}
 
-	if err := DB.Model(&user).Association("CreditCard").Find(&CreditCard{}).Error; err == nil {
+	if err := DB.Model(&user).Association("CreditCard").Find(&CreditCard{}).Error(); err == nil {
 		t.Errorf("User's creditcard is not findable after Delete")
 	}
 
@@ -364,7 +364,7 @@ func TestHasOne(t *testing.T) {
 		t.Errorf("User's credit card count should be 1 when query with Unscoped, but got %v", count)
 	}
 
-	if err := DB.Unscoped().Model(&user).Association("CreditCard").Find(&CreditCard{}).Error; err != nil {
+	if err := DB.Unscoped().Model(&user).Association("CreditCard").Find(&CreditCard{}).Error(); err != nil {
 		t.Errorf("User's creditcard should be findable when query with Unscoped, got %v", err)
 	}
 }
@@ -419,7 +419,7 @@ func TestHasMany(t *testing.T) {
 		Comments: []*Comment{{Content: "Comment 1"}, {Content: "Comment 2"}},
 	}
 
-	if err := DB.Save(&post).Error; err != nil {
+	if err := DB.Save(&post).Error(); err != nil {
 		t.Error("Got errors when save post", err)
 	}
 
@@ -440,7 +440,7 @@ func TestHasMany(t *testing.T) {
 	}
 
 	// Query
-	if DB.First(&Comment{}, "content = ?", "Comment 1").Error != nil {
+	if DB.First(&Comment{}, "content = ?", "Comment 1").Error() != nil {
 		t.Errorf("Comment 1 should be saved")
 	}
 
@@ -732,7 +732,7 @@ func TestRelated(t *testing.T) {
 		Company:         Company{Name: "company1"},
 	}
 
-	if err := DB.Save(&user).Error; err != nil {
+	if err := DB.Save(&user).Error(); err != nil {
 		t.Errorf("No error should happen when saving user")
 	}
 
@@ -859,7 +859,7 @@ func testForeignKey(t *testing.T, source interface{}, sourceFieldName string, ta
 		t.Fatalf(fmt.Sprintf("Failed to get field by name: %v", targetFieldName))
 	}
 	dest := fmt.Sprintf("%v(%v)", targetTableName, targetField.DBName)
-	err := DB.Model(source).AddForeignKey(modelField.DBName, dest, "CASCADE", "CASCADE").Error
+	err := DB.Model(source).AddForeignKey(modelField.DBName, dest, "CASCADE", "CASCADE").Error()
 	if err != nil {
 		t.Fatalf(fmt.Sprintf("Failed to create foreign key: %v", err))
 	}

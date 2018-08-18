@@ -14,11 +14,11 @@ import (
 
 // Scope contain current operation's information when you perform any operation on the database
 type Scope struct {
-	Search          *search
+	Search          *Search
 	Value           interface{}
 	SQL             string
 	SQLVars         []interface{}
-	db              *DB
+	db              GormDB
 	instanceID      string
 	primaryKeyField *Field
 	skipLeft        bool
@@ -33,7 +33,7 @@ func (scope *Scope) IndirectValue() reflect.Value {
 
 // New create a new Scope without search information
 func (scope *Scope) New(value interface{}) *Scope {
-	return &Scope{db: scope.NewDB(), Search: &search{}, Value: value}
+	return &Scope{db: scope.NewDB(), Search: &Search{}, Value: value}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -41,16 +41,16 @@ func (scope *Scope) New(value interface{}) *Scope {
 ////////////////////////////////////////////////////////////////////////////////
 
 // DB return scope's DB connection
-func (scope *Scope) DB() *DB {
+func (scope *Scope) DB() GormDB {
 	return scope.db
 }
 
 // NewDB create a new DB without search information
-func (scope *Scope) NewDB() *DB {
+func (scope *Scope) NewDB() GormDB {
 	if scope.db != nil {
-		db := scope.db.clone()
-		db.search = nil
-		db.Value = nil
+		db := scope.db.Clone()
+		db.SetSearch(nil)
+		db.SetValue(nil)
 		return db
 	}
 	return nil
@@ -58,12 +58,12 @@ func (scope *Scope) NewDB() *DB {
 
 // SQLDB return *sql.DB
 func (scope *Scope) SQLDB() SQLCommon {
-	return scope.db.db
+	return scope.db.SQLCommonDB()
 }
 
 // Dialect get dialect
 func (scope *Scope) Dialect() Dialect {
-	return scope.db.dialect
+	return scope.db.Dialect()
 }
 
 // Quote used to quote string to escape them for database
@@ -89,12 +89,12 @@ func (scope *Scope) Err(err error) error {
 
 // HasError check if there are any error
 func (scope *Scope) HasError() bool {
-	return scope.db.Error != nil
+	return scope.db.Error() != nil
 }
 
 // Log print log message
 func (scope *Scope) Log(v ...interface{}) {
-	scope.db.log(v...)
+	scope.db.Log(v...)
 }
 
 // SkipLeft skip remaining callbacks
@@ -257,7 +257,7 @@ func (scope *Scope) CallMethod(methodName string) {
 func (scope *Scope) AddToVars(value interface{}) string {
 	_, skipBindVar := scope.InstanceGet("skip_bindvar")
 
-	if expr, ok := value.(*expr); ok {
+	if expr, ok := value.(*Expression); ok {
 		exp := expr.expr
 		for _, arg := range expr.args {
 			if skipBindVar {
@@ -307,7 +307,7 @@ type tabler interface {
 }
 
 type dbTabler interface {
-	TableName(*DB) string
+	TableName(repository GormDB) string
 }
 
 // TableName return table name
@@ -363,7 +363,7 @@ func (scope *Scope) Exec() *Scope {
 	if !scope.HasError() {
 		if result, err := scope.SQLDB().Exec(scope.SQL, scope.SQLVars...); scope.Err(err) == nil {
 			if count, err := result.RowsAffected(); scope.Err(err) == nil {
-				scope.db.RowsAffected = count
+				scope.db.SetRowsAffected(count)
 			}
 		}
 	}
@@ -403,7 +403,7 @@ func (scope *Scope) InstanceGet(name string) (interface{}, bool) {
 func (scope *Scope) Begin() *Scope {
 	if db, ok := scope.SQLDB().(sqlDb); ok {
 		if tx, err := db.Begin(); err == nil {
-			scope.db.db = interface{}(tx).(SQLCommon)
+			scope.db.SetSQLCommonDB(interface{}(tx).(SQLCommon))
 			scope.InstanceSet("gorm:started_transaction", true)
 		}
 	}
@@ -413,13 +413,13 @@ func (scope *Scope) Begin() *Scope {
 // CommitOrRollback commit current transaction if no error happened, otherwise will rollback it
 func (scope *Scope) CommitOrRollback() *Scope {
 	if _, ok := scope.InstanceGet("gorm:started_transaction"); ok {
-		if db, ok := scope.db.db.(sqlTx); ok {
+		if db, ok := scope.db.SQLCommonDB().(sqlTx); ok {
 			if scope.HasError() {
 				db.Rollback()
 			} else {
 				scope.Err(db.Commit())
 			}
-			scope.db.db = scope.db.parent.db
+			scope.db.SetSQLCommonDB(scope.db.Parent().SQLCommonDB())
 		}
 	}
 	return scope
@@ -441,18 +441,18 @@ func (scope *Scope) callMethod(methodName string, reflectValue reflect.Value) {
 			method()
 		case func(*Scope):
 			method(scope)
-		case func(*DB):
+		case func(GormDB):
 			newDB := scope.NewDB()
 			method(newDB)
-			scope.Err(newDB.Error)
+			scope.Err(newDB.Error())
 		case func() error:
 			scope.Err(method())
 		case func(*Scope) error:
 			scope.Err(method(scope))
-		case func(*DB) error:
+		case func(GormDB) error:
 			newDB := scope.NewDB()
 			scope.Err(method(newDB))
-			scope.Err(newDB.Error)
+			scope.Err(newDB.Error())
 		default:
 			scope.Err(fmt.Errorf("unsupported function %v", methodName))
 		}
@@ -783,7 +783,7 @@ func (scope *Scope) orderSQL() string {
 	for _, order := range scope.Search.orders {
 		if str, ok := order.(string); ok {
 			orders = append(orders, scope.quoteIfPossible(str))
-		} else if expr, ok := order.(*expr); ok {
+		} else if expr, ok := order.(*Expression); ok {
 			exp := expr.expr
 			for _, arg := range expr.args {
 				exp = strings.Replace(exp, "?", scope.AddToVars(arg), 1)
@@ -902,7 +902,7 @@ func (scope *Scope) updatedAttrsWithValues(value interface{}) (results map[strin
 
 	for key, value := range convertInterfaceToMap(value, true) {
 		if field, ok := scope.FieldByName(key); ok && scope.changeableField(field) {
-			if _, ok := value.(*expr); ok {
+			if _, ok := value.(*Expression); ok {
 				hasUpdate = true
 				results[field.DBName] = value
 			} else {
@@ -926,7 +926,7 @@ func (scope *Scope) row() *sql.Row {
 
 	result := &RowQueryResult{}
 	scope.InstanceSet("row_query_result", result)
-	scope.callCallbacks(scope.db.parent.callbacks.rowQueries)
+	scope.callCallbacks(scope.db.Parent().Callbacks().rowQueries)
 
 	return result.Row
 }
@@ -936,7 +936,7 @@ func (scope *Scope) rows() (*sql.Rows, error) {
 
 	result := &RowsQueryResult{}
 	scope.InstanceSet("row_query_result", result)
-	scope.callCallbacks(scope.db.parent.callbacks.rowQueries)
+	scope.callCallbacks(scope.db.Parent().Callbacks().rowQueries)
 
 	return result.Rows, result.Error
 }
@@ -1021,7 +1021,7 @@ func (scope *Scope) typeName() string {
 // trace print sql log
 func (scope *Scope) trace(t time.Time) {
 	if len(scope.SQL) > 0 {
-		scope.db.slog(scope.SQL, t, scope.SQLVars...)
+		scope.db.Slog(scope.SQL, t, scope.SQLVars...)
 	}
 }
 
@@ -1056,14 +1056,14 @@ func (scope *Scope) related(value interface{}, foreignKeys ...string) *Scope {
 			if relationship := fromField.Relationship; relationship != nil {
 				if relationship.Kind == "many_to_many" {
 					joinTableHandler := relationship.JoinTableHandler
-					scope.Err(joinTableHandler.JoinWith(joinTableHandler, tx, scope.Value).Find(value).Error)
+					scope.Err(joinTableHandler.JoinWith(joinTableHandler, tx, scope.Value).Find(value).Error())
 				} else if relationship.Kind == "belongs_to" {
 					for idx, foreignKey := range relationship.ForeignDBNames {
 						if field, ok := scope.FieldByName(foreignKey); ok {
 							tx = tx.Where(fmt.Sprintf("%v = ?", scope.Quote(relationship.AssociationForeignDBNames[idx])), field.Field.Interface())
 						}
 					}
-					scope.Err(tx.Find(value).Error)
+					scope.Err(tx.Find(value).Error())
 				} else if relationship.Kind == "has_many" || relationship.Kind == "has_one" {
 					for idx, foreignKey := range relationship.ForeignDBNames {
 						if field, ok := scope.FieldByName(relationship.AssociationForeignDBNames[idx]); ok {
@@ -1074,16 +1074,16 @@ func (scope *Scope) related(value interface{}, foreignKeys ...string) *Scope {
 					if relationship.PolymorphicType != "" {
 						tx = tx.Where(fmt.Sprintf("%v = ?", scope.Quote(relationship.PolymorphicDBName)), relationship.PolymorphicValue)
 					}
-					scope.Err(tx.Find(value).Error)
+					scope.Err(tx.Find(value).Error())
 				}
 			} else {
 				sql := fmt.Sprintf("%v = ?", scope.Quote(toScope.PrimaryKey()))
-				scope.Err(tx.Where(sql, fromField.Field.Interface()).Find(value).Error)
+				scope.Err(tx.Where(sql, fromField.Field.Interface()).Find(value).Error())
 			}
 			return scope
 		} else if toField != nil {
 			sql := fmt.Sprintf("%v = ?", scope.Quote(toField.DBName))
-			scope.Err(tx.Where(sql, scope.PrimaryKeyValue()).Find(value).Error)
+			scope.Err(tx.Where(sql, scope.PrimaryKeyValue()).Find(value).Error())
 			return scope
 		}
 	}
@@ -1131,7 +1131,7 @@ func (scope *Scope) createJoinTable(field *StructField) {
 				}
 			}
 
-			scope.Err(scope.NewDB().Exec(fmt.Sprintf("CREATE TABLE %v (%v, PRIMARY KEY (%v))%s", scope.Quote(joinTable), strings.Join(sqlTypes, ","), strings.Join(primaryKeys, ","), scope.getTableOptions())).Error)
+			scope.Err(scope.NewDB().Exec(fmt.Sprintf("CREATE TABLE %v (%v, PRIMARY KEY (%v))%s", scope.Quote(joinTable), strings.Join(sqlTypes, ","), strings.Join(primaryKeys, ","), scope.getTableOptions())).Error())
 		}
 		scope.NewDB().Table(joinTable).AutoMigrate(joinTableHandler)
 	}
@@ -1284,14 +1284,14 @@ func (scope *Scope) autoIndex() *Scope {
 	}
 
 	for name, columns := range indexes {
-		if db := scope.NewDB().Table(scope.TableName()).Model(scope.Value).AddIndex(name, columns...); db.Error != nil {
-			scope.db.AddError(db.Error)
+		if db := scope.NewDB().Table(scope.TableName()).Model(scope.Value).AddIndex(name, columns...); db.Error() != nil {
+			scope.db.AddError(db.Error())
 		}
 	}
 
 	for name, columns := range uniqueIndexes {
-		if db := scope.NewDB().Table(scope.TableName()).Model(scope.Value).AddUniqueIndex(name, columns...); db.Error != nil {
-			scope.db.AddError(db.Error)
+		if db := scope.NewDB().Table(scope.TableName()).Model(scope.Value).AddUniqueIndex(name, columns...); db.Error() != nil {
+			scope.db.AddError(db.Error())
 		}
 	}
 

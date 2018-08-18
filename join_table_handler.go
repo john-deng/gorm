@@ -12,13 +12,13 @@ type JoinTableHandlerInterface interface {
 	// initialize join table handler
 	Setup(relationship *Relationship, tableName string, source reflect.Type, destination reflect.Type)
 	// Table return join table's table name
-	Table(db *DB) string
+	Table(db GormDB) string
 	// Add create relationship in join table for source and destination
-	Add(handler JoinTableHandlerInterface, db *DB, source interface{}, destination interface{}) error
+	Add(handler JoinTableHandlerInterface, db GormDB, source interface{}, destination interface{}) error
 	// Delete delete relationship in join table for sources
-	Delete(handler JoinTableHandlerInterface, db *DB, sources ...interface{}) error
+	Delete(handler JoinTableHandlerInterface, db GormDB, sources ...interface{}) error
 	// JoinWith query with `Join` conditions
-	JoinWith(handler JoinTableHandlerInterface, db *DB, source interface{}) *DB
+	JoinWith(handler JoinTableHandlerInterface, db GormDB, source interface{}) GormDB
 	// SourceForeignKeys return source foreign keys
 	SourceForeignKeys() []JoinTableForeignKey
 	// DestinationForeignKeys return destination foreign keys
@@ -78,11 +78,11 @@ func (s *JoinTableHandler) Setup(relationship *Relationship, tableName string, s
 }
 
 // Table return join table's table name
-func (s JoinTableHandler) Table(db *DB) string {
+func (s JoinTableHandler) Table(db GormDB) string {
 	return DefaultTableNameHandler(db, s.TableName)
 }
 
-func (s JoinTableHandler) updateConditionMap(conditionMap map[string]interface{}, db *DB, joinTableSources []JoinTableSource, sources ...interface{}) {
+func (s JoinTableHandler) updateConditionMap(conditionMap map[string]interface{}, db GormDB, joinTableSources []JoinTableSource, sources ...interface{}) {
 	for _, source := range sources {
 		scope := db.NewScope(source)
 		modelType := scope.GetModelStruct().ModelType
@@ -101,7 +101,7 @@ func (s JoinTableHandler) updateConditionMap(conditionMap map[string]interface{}
 }
 
 // Add create relationship in join table for source and destination
-func (s JoinTableHandler) Add(handler JoinTableHandlerInterface, db *DB, source interface{}, destination interface{}) error {
+func (s JoinTableHandler) Add(handler JoinTableHandlerInterface, db GormDB, source interface{}, destination interface{}) error {
 	var (
 		scope        = db.NewScope("")
 		conditionMap = map[string]interface{}{}
@@ -137,11 +137,11 @@ func (s JoinTableHandler) Add(handler JoinTableHandlerInterface, db *DB, source 
 		strings.Join(conditions, " AND "),
 	)
 
-	return db.Exec(sql, values...).Error
+	return db.Exec(sql, values...).Error()
 }
 
 // Delete delete relationship in join table for sources
-func (s JoinTableHandler) Delete(handler JoinTableHandlerInterface, db *DB, sources ...interface{}) error {
+func (s JoinTableHandler) Delete(handler JoinTableHandlerInterface, db GormDB, sources ...interface{}) error {
 	var (
 		scope        = db.NewScope(nil)
 		conditions   []string
@@ -156,11 +156,11 @@ func (s JoinTableHandler) Delete(handler JoinTableHandlerInterface, db *DB, sour
 		values = append(values, value)
 	}
 
-	return db.Table(handler.Table(db)).Where(strings.Join(conditions, " AND "), values...).Delete("").Error
+	return db.Table(handler.Table(db)).Where(strings.Join(conditions, " AND "), values...).Delete("").Error()
 }
 
 // JoinWith query with `Join` conditions
-func (s JoinTableHandler) JoinWith(handler JoinTableHandlerInterface, db *DB, source interface{}) *DB {
+func (s JoinTableHandler) JoinWith(handler JoinTableHandlerInterface, db GormDB, source interface{}) GormDB {
 	var (
 		scope           = db.NewScope(source)
 		tableName       = handler.Table(db)
@@ -206,6 +206,6 @@ func (s JoinTableHandler) JoinWith(handler JoinTableHandlerInterface, db *DB, so
 			Where(condString, toQueryValues(foreignFieldValues)...)
 	}
 
-	db.Error = errors.New("wrong source type for join table handler")
+	db.SetError(errors.New("wrong source type for join table handler"))
 	return db
 }

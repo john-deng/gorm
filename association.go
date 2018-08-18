@@ -8,21 +8,25 @@ import (
 
 // Association Mode contains some helper methods to handle relationship things easily.
 type Association struct {
-	Error  error
+	err  error
 	scope  *Scope
 	column string
 	field  *Field
 }
 
+func (association *Association) Error() error  {
+	return association.err
+}
+
 // Find find out all related associations
 func (association *Association) Find(value interface{}) *Association {
 	association.scope.related(value, association.column)
-	return association.setErr(association.scope.db.Error)
+	return association.setErr(association.scope.db.Error())
 }
 
 // Append append new associations for many2many, has_many, replace current association for has_one, belongs_to
 func (association *Association) Append(values ...interface{}) *Association {
-	if association.Error != nil {
+	if association.Error() != nil {
 		return association
 	}
 
@@ -34,7 +38,7 @@ func (association *Association) Append(values ...interface{}) *Association {
 
 // Replace replace current associations with new one
 func (association *Association) Replace(values ...interface{}) *Association {
-	if association.Error != nil {
+	if association.Error() != nil {
 		return association
 	}
 
@@ -58,7 +62,7 @@ func (association *Association) Replace(values ...interface{}) *Association {
 			for _, foreignKey := range relationship.ForeignDBNames {
 				foreignKeyMap[foreignKey] = nil
 			}
-			association.setErr(newDB.Model(scope.Value).UpdateColumn(foreignKeyMap).Error)
+			association.setErr(newDB.Model(scope.Value).UpdateColumn(foreignKeyMap).Error())
 		}
 	} else {
 		// Polymorphic Relations
@@ -120,7 +124,7 @@ func (association *Association) Replace(values ...interface{}) *Association {
 			}
 
 			fieldValue := reflect.New(association.field.Field.Type()).Interface()
-			association.setErr(newDB.Model(fieldValue).UpdateColumn(foreignKeyMap).Error)
+			association.setErr(newDB.Model(fieldValue).UpdateColumn(foreignKeyMap).Error())
 		}
 	}
 	return association
@@ -128,7 +132,7 @@ func (association *Association) Replace(values ...interface{}) *Association {
 
 // Delete remove relationship between source & passed arguments, but won't delete those arguments
 func (association *Association) Delete(values ...interface{}) *Association {
-	if association.Error != nil {
+	if association.Error() != nil {
 		return association
 	}
 
@@ -190,12 +194,12 @@ func (association *Association) Delete(values ...interface{}) *Association {
 
 			// set foreign key to be null if there are some records affected
 			modelValue := reflect.New(scope.GetModelStruct().ModelType).Interface()
-			if results := newDB.Model(modelValue).UpdateColumn(foreignKeyMap); results.Error == nil {
-				if results.RowsAffected > 0 {
+			if results := newDB.Model(modelValue).UpdateColumn(foreignKeyMap); results.Error() == nil {
+				if results.RowsAffected() > 0 {
 					scope.updatedAttrsWithValues(foreignKeyMap)
 				}
 			} else {
-				association.setErr(results.Error)
+				association.setErr(results.Error())
 			}
 		} else if relationship.Kind == "has_one" || relationship.Kind == "has_many" {
 			// find all relations
@@ -213,12 +217,12 @@ func (association *Association) Delete(values ...interface{}) *Association {
 
 			// set matched relation's foreign key to be null
 			fieldValue := reflect.New(association.field.Field.Type()).Interface()
-			association.setErr(newDB.Model(fieldValue).UpdateColumn(foreignKeyMap).Error)
+			association.setErr(newDB.Model(fieldValue).UpdateColumn(foreignKeyMap).Error())
 		}
 	}
 
 	// Remove deleted records from source's field
-	if association.Error == nil {
+	if association.Error() == nil {
 		if field.Kind() == reflect.Slice {
 			leftValues := reflect.Zero(field.Type())
 
@@ -290,8 +294,8 @@ func (association *Association) Count() int {
 		)
 	}
 
-	if err := query.Model(fieldValue).Count(&count).Error; err != nil {
-		association.Error = err
+	if err := query.Model(fieldValue).Count(&count).Error(); err != nil {
+		association.err = err
 	}
 	return count
 }
@@ -315,7 +319,7 @@ func (association *Association) saveAssociations(values ...interface{}) *Associa
 		// value has to been saved for many2many
 		if relationship.Kind == "many_to_many" {
 			if scope.New(reflectValue.Interface()).PrimaryKeyZero() {
-				association.setErr(scope.NewDB().Save(reflectValue.Interface()).Error)
+				association.setErr(scope.NewDB().Save(reflectValue.Interface()).Error())
 			}
 		}
 
@@ -341,7 +345,7 @@ func (association *Association) saveAssociations(values ...interface{}) *Associa
 		if relationship.Kind == "many_to_many" {
 			association.setErr(relationship.JoinTableHandler.Add(relationship.JoinTableHandler, scope.NewDB(), scope.Value, reflectValue.Interface()))
 		} else {
-			association.setErr(scope.NewDB().Select(field.Name).Save(scope.Value).Error)
+			association.setErr(scope.NewDB().Select(field.Name).Save(scope.Value).Error())
 
 			if setFieldBackToValue {
 				reflectValue.Elem().Set(field.Field)
@@ -369,7 +373,7 @@ func (association *Association) saveAssociations(values ...interface{}) *Associa
 
 func (association *Association) setErr(err error) *Association {
 	if err != nil {
-		association.Error = err
+		association.err = err
 	}
 	return association
 }

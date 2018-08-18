@@ -276,7 +276,7 @@ func getPreparedUser(name string, role string) *User {
 }
 
 func runMigration() {
-	if err := DB.DropTableIfExists(&User{}).Error; err != nil {
+	if err := DB.DropTableIfExists(&User{}).Error(); err != nil {
 		fmt.Printf("Got error when try to delete table users, %+v\n", err)
 	}
 
@@ -288,13 +288,13 @@ func runMigration() {
 	for _, value := range values {
 		DB.DropTable(value)
 	}
-	if err := DB.AutoMigrate(values...).Error; err != nil {
+	if err := DB.AutoMigrate(values...).Error(); err != nil {
 		panic(fmt.Sprintf("No error should happen when create table, but got %+v", err))
 	}
 }
 
 func TestIndexes(t *testing.T) {
-	if err := DB.Model(&Email{}).AddIndex("idx_email_email", "email").Error; err != nil {
+	if err := DB.Model(&Email{}).AddIndex("idx_email_email", "email").Error(); err != nil {
 		t.Errorf("Got error when tried to create index: %+v", err)
 	}
 
@@ -303,7 +303,7 @@ func TestIndexes(t *testing.T) {
 		t.Errorf("Email should have index idx_email_email")
 	}
 
-	if err := DB.Model(&Email{}).RemoveIndex("idx_email_email").Error; err != nil {
+	if err := DB.Model(&Email{}).RemoveIndex("idx_email_email").Error(); err != nil {
 		t.Errorf("Got error when tried to remove index: %+v", err)
 	}
 
@@ -311,7 +311,7 @@ func TestIndexes(t *testing.T) {
 		t.Errorf("Email's index idx_email_email should be deleted")
 	}
 
-	if err := DB.Model(&Email{}).AddIndex("idx_email_email_and_user_id", "user_id", "email").Error; err != nil {
+	if err := DB.Model(&Email{}).AddIndex("idx_email_email_and_user_id", "user_id", "email").Error(); err != nil {
 		t.Errorf("Got error when tried to create index: %+v", err)
 	}
 
@@ -319,7 +319,7 @@ func TestIndexes(t *testing.T) {
 		t.Errorf("Email should have index idx_email_email_and_user_id")
 	}
 
-	if err := DB.Model(&Email{}).RemoveIndex("idx_email_email_and_user_id").Error; err != nil {
+	if err := DB.Model(&Email{}).RemoveIndex("idx_email_email_and_user_id").Error(); err != nil {
 		t.Errorf("Got error when tried to remove index: %+v", err)
 	}
 
@@ -327,7 +327,7 @@ func TestIndexes(t *testing.T) {
 		t.Errorf("Email's index idx_email_email_and_user_id should be deleted")
 	}
 
-	if err := DB.Model(&Email{}).AddUniqueIndex("idx_email_email_and_user_id", "user_id", "email").Error; err != nil {
+	if err := DB.Model(&Email{}).AddUniqueIndex("idx_email_email_and_user_id", "user_id", "email").Error(); err != nil {
 		t.Errorf("Got error when tried to create index: %+v", err)
 	}
 
@@ -335,21 +335,21 @@ func TestIndexes(t *testing.T) {
 		t.Errorf("Email should have index idx_email_email_and_user_id")
 	}
 
-	if DB.Save(&User{Name: "unique_indexes", Emails: []Email{{Email: "user1@example.comiii"}, {Email: "user1@example.com"}, {Email: "user1@example.com"}}}).Error == nil {
+	if DB.Save(&User{Name: "unique_indexes", Emails: []Email{{Email: "user1@example.comiii"}, {Email: "user1@example.com"}, {Email: "user1@example.com"}}}).Error() == nil {
 		t.Errorf("Should get to create duplicate record when having unique index")
 	}
 
 	var user = User{Name: "sample_user"}
 	DB.Save(&user)
-	if DB.Model(&user).Association("Emails").Append(Email{Email: "not-1duplicated@gmail.com"}, Email{Email: "not-duplicated2@gmail.com"}).Error != nil {
+	if DB.Model(&user).Association("Emails").Append(Email{Email: "not-1duplicated@gmail.com"}, Email{Email: "not-duplicated2@gmail.com"}).Error() != nil {
 		t.Errorf("Should get no error when append two emails for user")
 	}
 
-	if DB.Model(&user).Association("Emails").Append(Email{Email: "duplicated@gmail.com"}, Email{Email: "duplicated@gmail.com"}).Error == nil {
+	if DB.Model(&user).Association("Emails").Append(Email{Email: "duplicated@gmail.com"}, Email{Email: "duplicated@gmail.com"}).Error() == nil {
 		t.Errorf("Should get no duplicated email error when insert duplicated emails for a user")
 	}
 
-	if err := DB.Model(&Email{}).RemoveIndex("idx_email_email_and_user_id").Error; err != nil {
+	if err := DB.Model(&Email{}).RemoveIndex("idx_email_email_and_user_id").Error(); err != nil {
 		t.Errorf("Got error when tried to remove index: %+v", err)
 	}
 
@@ -357,7 +357,7 @@ func TestIndexes(t *testing.T) {
 		t.Errorf("Email's index idx_email_email_and_user_id should be deleted")
 	}
 
-	if DB.Save(&User{Name: "unique_indexes", Emails: []Email{{Email: "user1@example.com"}, {Email: "user1@example.com"}}}).Error != nil {
+	if DB.Save(&User{Name: "unique_indexes", Emails: []Email{{Email: "user1@example.com"}, {Email: "user1@example.com"}}}).Error() != nil {
 		t.Errorf("Should be able to create duplicated emails after remove unique index")
 	}
 }
@@ -375,7 +375,7 @@ type EmailWithIdx struct {
 func TestAutoMigration(t *testing.T) {
 	DB.AutoMigrate(&Address{})
 	DB.DropTable(&EmailWithIdx{})
-	if err := DB.AutoMigrate(&EmailWithIdx{}).Error; err != nil {
+	if err := DB.AutoMigrate(&EmailWithIdx{}).Error(); err != nil {
 		t.Errorf("Auto Migrate should not raise any error")
 	}
 
@@ -420,7 +420,7 @@ func TestCreateAndAutomigrateTransaction(t *testing.T) {
 		type Bar struct {
 			Name string
 		}
-		err := tx.CreateTable(&Bar{}).Error
+		err := tx.CreateTable(&Bar{}).Error()
 
 		if err != nil {
 			t.Errorf("Should have been able to create the table, but couldn't: %s", err)
@@ -436,7 +436,7 @@ func TestCreateAndAutomigrateTransaction(t *testing.T) {
 			Stuff string
 		}
 
-		err := tx.AutoMigrate(&Bar{}).Error
+		err := tx.AutoMigrate(&Bar{}).Error()
 		if err != nil {
 			t.Errorf("Should have been able to alter the table, but couldn't")
 		}
@@ -454,12 +454,12 @@ type MultipleIndexes struct {
 }
 
 func TestMultipleIndexes(t *testing.T) {
-	if err := DB.DropTableIfExists(&MultipleIndexes{}).Error; err != nil {
+	if err := DB.DropTableIfExists(&MultipleIndexes{}).Error(); err != nil {
 		fmt.Printf("Got error when try to delete table multiple_indexes, %+v\n", err)
 	}
 
 	DB.AutoMigrate(&MultipleIndexes{})
-	if err := DB.AutoMigrate(&EmailWithIdx{}).Error; err != nil {
+	if err := DB.AutoMigrate(&EmailWithIdx{}).Error(); err != nil {
 		t.Errorf("Auto Migrate should not raise any error")
 	}
 
@@ -493,19 +493,19 @@ func TestMultipleIndexes(t *testing.T) {
 	}
 
 	// Check unique constraints
-	if err := DB.Save(&MultipleIndexes{UserID: 1, Name: "name1", Email: "jinzhu@example.org", Other: "foo"}).Error; err == nil {
+	if err := DB.Save(&MultipleIndexes{UserID: 1, Name: "name1", Email: "jinzhu@example.org", Other: "foo"}).Error(); err == nil {
 		t.Error("MultipleIndexes unique index failed")
 	}
 
-	if err := DB.Save(&MultipleIndexes{UserID: 1, Name: "name1", Email: "foo@example.org", Other: "foo"}).Error; err != nil {
+	if err := DB.Save(&MultipleIndexes{UserID: 1, Name: "name1", Email: "foo@example.org", Other: "foo"}).Error(); err != nil {
 		t.Error("MultipleIndexes unique index failed")
 	}
 
-	if err := DB.Save(&MultipleIndexes{UserID: 2, Name: "name1", Email: "jinzhu@example.org", Other: "foo"}).Error; err == nil {
+	if err := DB.Save(&MultipleIndexes{UserID: 2, Name: "name1", Email: "jinzhu@example.org", Other: "foo"}).Error(); err == nil {
 		t.Error("MultipleIndexes unique index failed")
 	}
 
-	if err := DB.Save(&MultipleIndexes{UserID: 2, Name: "name1", Email: "foo2@example.org", Other: "foo"}).Error; err != nil {
+	if err := DB.Save(&MultipleIndexes{UserID: 2, Name: "name1", Email: "foo2@example.org", Other: "foo"}).Error(); err != nil {
 		t.Error("MultipleIndexes unique index failed")
 	}
 }
@@ -526,7 +526,7 @@ func TestModifyColumnType(t *testing.T) {
 	name2Field, _ := DB.NewScope(&ModifyColumnType{}).FieldByName("Name2")
 	name2Type := DB.Dialect().DataTypeOf(name2Field.StructField)
 
-	if err := DB.Model(&ModifyColumnType{}).ModifyColumn("name1", name2Type).Error; err != nil {
+	if err := DB.Model(&ModifyColumnType{}).ModifyColumn("name1", name2Type).Error(); err != nil {
 		t.Errorf("No error should happen when ModifyColumn, but got %v", err)
 	}
 }

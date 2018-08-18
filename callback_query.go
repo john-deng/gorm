@@ -54,7 +54,7 @@ func queryCallback(scope *Scope) {
 	scope.prepareQuerySQL()
 
 	if !scope.HasError() {
-		scope.db.RowsAffected = 0
+		scope.db.SetRowsAffected(0)
 		if str, ok := scope.Get("gorm:query_option"); ok {
 			scope.SQL += addExtraSpaceIfExist(fmt.Sprint(str))
 		}
@@ -64,7 +64,7 @@ func queryCallback(scope *Scope) {
 
 			columns, _ := rows.Columns()
 			for rows.Next() {
-				scope.db.RowsAffected++
+				scope.db.SetRowsAffected(scope.db.RowsAffected() + 1)
 
 				elem := results
 				if isSlice {
@@ -84,7 +84,7 @@ func queryCallback(scope *Scope) {
 
 			if err := rows.Err(); err != nil {
 				scope.Err(err)
-			} else if scope.db.RowsAffected == 0 && !isSlice {
+			} else if scope.db.RowsAffected() == 0 && !isSlice {
 				scope.Err(ErrRecordNotFound)
 			}
 		}

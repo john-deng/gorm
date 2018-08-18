@@ -32,7 +32,7 @@ func TestFirstAndLast(t *testing.T) {
 	}
 
 	var user User
-	if DB.Joins("left join emails on emails.user_id = users.id").First(&user).Error != nil {
+	if DB.Joins("left join emails on emails.user_id = users.id").First(&user).Error() != nil {
 		t.Errorf("Should not raise any error when order with Join table")
 	}
 
@@ -105,11 +105,11 @@ func TestCustomizedTypePrimaryKey(t *testing.T) {
 
 	var p CustomizedTypePrimaryKey
 
-	if err := DB.First(&p, p2.ID).Error; err == nil {
+	if err := DB.First(&p, p2.ID).Error(); err == nil {
 		t.Errorf("Should return error for invalid query condition")
 	}
 
-	if err := DB.First(&p, "id = ?", p2.ID).Error; err != nil {
+	if err := DB.First(&p, "id = ?", p2.ID).Error(); err != nil {
 		t.Errorf("No error should happen when querying with customized type for primary key, got err %v", err)
 	}
 
@@ -209,11 +209,11 @@ func TestSearchWithPlainSQL(t *testing.T) {
 		t.Errorf("Should found 1 users, but got %v", len(users))
 	}
 
-	if err := DB.Where("id IN (?)", []string{}).Find(&users).Error; err != nil {
+	if err := DB.Where("id IN (?)", []string{}).Find(&users).Error(); err != nil {
 		t.Error("no error should happen when query with empty slice, but got: ", err)
 	}
 
-	if err := DB.Not("id IN (?)", []string{}).Find(&users).Error; err != nil {
+	if err := DB.Not("id IN (?)", []string{}).Find(&users).Error(); err != nil {
 		t.Error("no error should happen when query with empty slice, but got: ", err)
 	}
 
@@ -232,7 +232,7 @@ func TestSearchWithTwoDimensionalArray(t *testing.T) {
 	DB.Create(&user3)
 
 	if dialect := DB.Dialect().GetName(); dialect == "mysql" || dialect == "postgres" {
-		if err := DB.Where("(name, age) IN (?)", [][]interface{}{{"2DSearchUser1", 1}, {"2DSearchUser2", 10}}).Find(&users).Error; err != nil {
+		if err := DB.Where("(name, age) IN (?)", [][]interface{}{{"2DSearchUser1", 1}, {"2DSearchUser2", 10}}).Find(&users).Error(); err != nil {
 			t.Errorf("No error should happen when query with 2D array, but got %v", err)
 
 			if len(users) != 2 {
@@ -242,7 +242,7 @@ func TestSearchWithTwoDimensionalArray(t *testing.T) {
 	}
 
 	if dialect := DB.Dialect().GetName(); dialect == "mssql" {
-		if err := DB.Joins("JOIN (VALUES ?) AS x (col1, col2) ON x.col1 = name AND x.col2 = age", [][]interface{}{{"2DSearchUser1", 1}, {"2DSearchUser2", 10}}).Find(&users).Error; err != nil {
+		if err := DB.Joins("JOIN (VALUES ?) AS x (col1, col2) ON x.col1 = name AND x.col2 = age", [][]interface{}{{"2DSearchUser1", 1}, {"2DSearchUser2", 10}}).Find(&users).Error(); err != nil {
 			t.Errorf("No error should happen when query with 2D array, but got %v", err)
 
 			if len(users) != 2 {
@@ -351,15 +351,15 @@ func TestSearchWithEmptyChain(t *testing.T) {
 	user3 := User{Name: "ChainearchUser3", Age: 20, Birthday: parseTime("2020-1-1")}
 	DB.Save(&user1).Save(&user2).Save(&user3)
 
-	if DB.Where("").Where("").First(&User{}).Error != nil {
+	if DB.Where("").Where("").First(&User{}).Error() != nil {
 		t.Errorf("Should not raise any error if searching with empty strings")
 	}
 
-	if DB.Where(&User{}).Where("name = ?", user1.Name).First(&User{}).Error != nil {
+	if DB.Where(&User{}).Where("name = ?", user1.Name).First(&User{}).Error() != nil {
 		t.Errorf("Should not raise any error if searching with empty struct")
 	}
 
-	if DB.Where(map[string]interface{}{}).Where("name = ?", user1.Name).First(&User{}).Error != nil {
+	if DB.Where(map[string]interface{}{}).Where("name = ?", user1.Name).First(&User{}).Error() != nil {
 		t.Errorf("Should not raise any error if searching with empty map")
 	}
 }
@@ -422,7 +422,7 @@ func TestOrderAndPluck(t *testing.T) {
 	}
 
 	var ages6 []int64
-	if err := scopedb.Order("").Pluck("age", &ages6).Error; err != nil {
+	if err := scopedb.Order("").Pluck("age", &ages6).Error(); err != nil {
 		t.Errorf("An empty string as order clause produces invalid queries")
 	}
 
@@ -479,7 +479,7 @@ func TestCount(t *testing.T) {
 	var count, count1, count2 int64
 	var users []User
 
-	if err := DB.Where("name = ?", user1.Name).Or("name = ?", user3.Name).Find(&users).Count(&count).Error; err != nil {
+	if err := DB.Where("name = ?", user1.Name).Or("name = ?", user3.Name).Find(&users).Count(&count).Error(); err != nil {
 		t.Errorf(fmt.Sprintf("Count should work, but got err %v", err))
 	}
 
@@ -493,7 +493,7 @@ func TestCount(t *testing.T) {
 	}
 
 	var count3 int
-	if err := DB.Model(&User{}).Where("name in (?)", []string{user2.Name, user2.Name, user3.Name}).Group("id").Count(&count3).Error; err != nil {
+	if err := DB.Model(&User{}).Where("name in (?)", []string{user2.Name, user2.Name, user3.Name}).Group("id").Count(&count3).Error(); err != nil {
 		t.Errorf("Not error should happen, but got %v", err)
 	}
 
@@ -514,7 +514,7 @@ func TestNot(t *testing.T) {
 	DB := DB.Where("role = ?", "not")
 
 	var users1, users2, users3, users4, users5, users6, users7, users8, users9 []User
-	if DB.Find(&users1).RowsAffected != 4 {
+	if DB.Find(&users1).RowsAffected() != 4 {
 		t.Errorf("should find 4 not users")
 	}
 	DB.Not(users1[0].Id).Find(&users2)
@@ -751,7 +751,7 @@ func TestPluckWithSelect(t *testing.T) {
 
 	selectStr := combineUserAgeSQL + " as user_age"
 	var userAges []string
-	err := DB.Model(&User{}).Where("age = ?", 25).Select(selectStr).Pluck("user_age", &userAges).Error
+	err := DB.Model(&User{}).Where("age = ?", 25).Select(selectStr).Pluck("user_age", &userAges).Error()
 	if err != nil {
 		t.Error(err)
 	}
@@ -762,7 +762,7 @@ func TestPluckWithSelect(t *testing.T) {
 
 	selectStr = combineUserAgeSQL + fmt.Sprintf(" as %v", DB.Dialect().Quote("user_age"))
 	userAges = userAges[:0]
-	err = DB.Model(&User{}).Where("age = ?", 25).Select(selectStr).Pluck("user_age", &userAges).Error
+	err = DB.Model(&User{}).Where("age = ?", 25).Select(selectStr).Pluck("user_age", &userAges).Error()
 	if err != nil {
 		t.Error(err)
 	}
