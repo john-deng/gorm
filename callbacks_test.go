@@ -37,7 +37,7 @@ func (s *Product) AfterFind() {
 	s.AfterFindCallTimes = s.AfterFindCallTimes + 1
 }
 
-func (s *Product) AfterCreate(tx gorm.GormDB) {
+func (s *Product) AfterCreate(tx gorm.Repository) {
 	tx.Model(s).UpdateColumn(Product{AfterCreateCallTimes: s.AfterCreateCallTimes + 1})
 }
 

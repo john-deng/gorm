@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	DB                 gorm.GormDB
+	DB                 gorm.Repository
 	t1, t2, t3, t4, t5 time.Time
 )
 
@@ -36,7 +36,7 @@ func init() {
 	runMigration()
 }
 
-func OpenTestConnection() (db gorm.GormDB, err error) {
+func OpenTestConnection() (db gorm.Repository, err error) {
 	dbDSN := os.Getenv("GORM_DSN")
 	switch os.Getenv("GORM_DIALECT") {
 	case "mysql":

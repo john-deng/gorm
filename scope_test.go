@@ -9,16 +9,16 @@ import (
 	"gorm.io/gorm"
 )
 
-func NameIn1And2(d gorm.GormDB) gorm.GormDB {
+func NameIn1And2(d gorm.Repository) gorm.Repository {
 	return d.Where("name in (?)", []string{"ScopeUser1", "ScopeUser2"})
 }
 
-func NameIn2And3(d gorm.GormDB) gorm.GormDB {
+func NameIn2And3(d gorm.Repository) gorm.Repository {
 	return d.Where("name in (?)", []string{"ScopeUser2", "ScopeUser3"})
 }
 
-func NameIn(names []string) func(d gorm.GormDB) gorm.GormDB {
-	return func(d gorm.GormDB) gorm.GormDB {
+func NameIn(names []string) func(d gorm.Repository) gorm.Repository {
+	return func(d gorm.Repository) gorm.Repository {
 		return d.Where("name in (?)", names)
 	}
 }

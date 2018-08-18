@@ -107,14 +107,14 @@ func autoPreload(scope *Scope) {
 	}
 }
 
-func (scope *Scope) generatePreloadDBWithConditions(conditions []interface{}) (GormDB, []interface{}) {
+func (scope *Scope) generatePreloadDBWithConditions(conditions []interface{}) (Repository, []interface{}) {
 	var (
 		preloadDB         = scope.NewDB()
 		preloadConditions []interface{}
 	)
 
 	for _, condition := range conditions {
-		if scopes, ok := condition.(func(GormDB) GormDB); ok {
+		if scopes, ok := condition.(func(Repository) Repository); ok {
 			preloadDB = scopes(preloadDB)
 		} else {
 			preloadConditions = append(preloadConditions, condition)

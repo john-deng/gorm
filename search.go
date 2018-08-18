@@ -5,7 +5,7 @@ import (
 )
 
 type Search struct {
-	db               GormDB
+	db               Repository
 	whereConditions  []map[string]interface{}
 	orConditions     []map[string]interface{}
 	notConditions    []map[string]interface{}

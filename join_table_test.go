@@ -23,7 +23,7 @@ type PersonAddress struct {
 	CreatedAt time.Time
 }
 
-func (*PersonAddress) Add(handler gorm.JoinTableHandlerInterface, db gorm.GormDB, foreignValue interface{}, associationValue interface{}) error {
+func (*PersonAddress) Add(handler gorm.JoinTableHandlerInterface, db gorm.Repository, foreignValue interface{}, associationValue interface{}) error {
 	foreignPrimaryKey, _ := strconv.Atoi(fmt.Sprint(db.NewScope(foreignValue).PrimaryKeyValue()))
 	associationPrimaryKey, _ := strconv.Atoi(fmt.Sprint(db.NewScope(associationValue).PrimaryKeyValue()))
 	if result := db.Unscoped().Model(&PersonAddress{}).Where(map[string]interface{}{
@@ -43,11 +43,11 @@ func (*PersonAddress) Add(handler gorm.JoinTableHandlerInterface, db gorm.GormDB
 	return nil
 }
 
-func (*PersonAddress) Delete(handler gorm.JoinTableHandlerInterface, db gorm.GormDB, sources ...interface{}) error {
+func (*PersonAddress) Delete(handler gorm.JoinTableHandlerInterface, db gorm.Repository, sources ...interface{}) error {
 	return db.Delete(&PersonAddress{}).Error()
 }
 
-func (pa *PersonAddress) JoinWith(handler gorm.JoinTableHandlerInterface, db gorm.GormDB, source interface{}) gorm.GormDB {
+func (pa *PersonAddress) JoinWith(handler gorm.JoinTableHandlerInterface, db gorm.Repository, source interface{}) gorm.Repository {
 	table := pa.Table(db)
 	return db.Joins("INNER JOIN person_addresses ON person_addresses.address_id = addresses.id").Where(fmt.Sprintf("%v.deleted_at IS NULL OR %v.deleted_at <= '0001-01-02'", table, table))
 }

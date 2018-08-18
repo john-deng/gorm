@@ -13,7 +13,7 @@ import (
 )
 
 // DefaultTableNameHandler default table name handler
-var DefaultTableNameHandler = func(db GormDB, defaultTableName string) string {
+var DefaultTableNameHandler = func(db Repository, defaultTableName string) string {
 	return defaultTableName
 }
 
@@ -49,7 +49,7 @@ type ModelStruct struct {
 }
 
 // TableName get model's table name
-func (s *ModelStruct) TableName(db GormDB) string {
+func (s *ModelStruct) TableName(db Repository) string {
 	if s.defaultTableName == "" && db != nil && s.ModelType != nil {
 		// Set default table name
 		if tabler, ok := reflect.New(s.ModelType).Interface().(tabler); ok {

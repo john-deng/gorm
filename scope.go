@@ -18,7 +18,7 @@ type Scope struct {
 	Value           interface{}
 	SQL             string
 	SQLVars         []interface{}
-	db              GormDB
+	db              Repository
 	instanceID      string
 	primaryKeyField *Field
 	skipLeft        bool
@@ -41,12 +41,12 @@ func (scope *Scope) New(value interface{}) *Scope {
 ////////////////////////////////////////////////////////////////////////////////
 
 // DB return scope's DB connection
-func (scope *Scope) DB() GormDB {
+func (scope *Scope) DB() Repository {
 	return scope.db
 }
 
 // NewDB create a new DB without search information
-func (scope *Scope) NewDB() GormDB {
+func (scope *Scope) NewDB() Repository {
 	if scope.db != nil {
 		db := scope.db.Clone()
 		db.SetSearch(nil)
@@ -307,7 +307,7 @@ type tabler interface {
 }
 
 type dbTabler interface {
-	TableName(repository GormDB) string
+	TableName(repository Repository) string
 }
 
 // TableName return table name
@@ -441,7 +441,7 @@ func (scope *Scope) callMethod(methodName string, reflectValue reflect.Value) {
 			method()
 		case func(*Scope):
 			method(scope)
-		case func(GormDB):
+		case func(Repository):
 			newDB := scope.NewDB()
 			method(newDB)
 			scope.Err(newDB.Error())
@@ -449,7 +449,7 @@ func (scope *Scope) callMethod(methodName string, reflectValue reflect.Value) {
 			scope.Err(method())
 		case func(*Scope) error:
 			scope.Err(method(scope))
-		case func(GormDB) error:
+		case func(Repository) error:
 			newDB := scope.NewDB()
 			scope.Err(method(newDB))
 			scope.Err(newDB.Error())
